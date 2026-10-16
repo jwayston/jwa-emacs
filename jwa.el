@@ -14,20 +14,20 @@
               (buffer-list)))
 
 (defun jwa-buffer-essential-p (buf)
-  "Is buffer essential for the system?"
+  "Is BUF essential for the system?"
   (let ((name (buffer-name buf)))
     (or (string-prefix-p " " name)
 	(member name (list "*new*" "*Messages*" "*scratch*")))))
 
 (defun jwa-buffer-active-p (buf)
-  "Is there current activity in the buffer?"
+  "Is there current activity in the BUF?"
   (or (and (buffer-modified-p buf)
 	   (not (string-prefix-p "*" (buffer-name buf))))
       (get-buffer-process buf)
       (get-buffer-window-list buf)))
 
 (defun jwa-buffer-current-p (buf)
-  "Is the buffer current buffer?"
+  "Is the buffer current BUF?"
   (eq buf (current-buffer)))
 
 (defun jwa-kill-futile-buffers ()
