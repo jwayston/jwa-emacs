@@ -92,7 +92,7 @@ Columns must be separated with two spaces. Column alignment is adjusted as per
   "Insert newline above, indent and jump there"
   (interactive)
   (move-beginning-of-line 1)
-  (newline-and-indent) (previous-line) (indent-according-to-mode))
+  (newline-and-indent) (forward-line -1) (indent-according-to-mode))
 
 (defun jwa-newline-below ()
   "Insert newline below, indent and jump there"
@@ -123,8 +123,8 @@ Columns must be separated with two spaces. Column alignment is adjusted as per
   "Jump to matching paren"
   (interactive)
   (cond ((looking-at "[([{\"']") (forward-sexp 1))
-	((looking-at "[)]}\"']" (backward-sexp 1))
-	 (t (message "Cursor not next to a paren")))))
+	((looking-at "[)]}\"']") (backward-sexp 1))
+	 (t (message "Cursor not next to a paren"))))
 
 (defun jwa-move-line-up-and-indent ()
   (interactive)
