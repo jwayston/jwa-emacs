@@ -46,7 +46,7 @@
   '(:eval (when (and (mode-line-window-selected-p) vc-mode)
 	    (propertize
 	     (replace-regexp-in-string "^ Git:\\(.*\\)" " [\\1] " vc-mode)
-	     'face '(:inherit shadow))))
+	     'face '(:inherit minibuffer-prompt))))
   "Construct to display version control infromation in the mode-line")
 
 (defvar-local jwa-modeline--tab-name
