@@ -1,5 +1,8 @@
 ;;; jwa-modeline.el --- Personal utility functions -*- lexical-binding: t; -*-
 
+;;; Commentary:
+;;; Code:
+
 (require 'jwa)
 (require 'battery)
 
@@ -17,6 +20,10 @@
 (setq battery-mode-line-format jwa-modeline--battery-format)
 
 (defun jwa-modeline--battery-hide-on-ac (orig-fun &rest args)
+  "Advice around `battery-update' to hide battery info when on AC power.
+Call ORIG-FUN with ARGS, but temporarily bind `battery-mode-line-format'
+to \" AC \" if AC power is detected, otherwise use
+`jwa-modeline--battery-format'."
   (let ((battery-mode-line-format
 	 (if (string-match-p "AC" (battery-format "%L" (funcall battery-status-function)))
 	     " AC " jwa-modeline--battery-format)))
@@ -28,26 +35,26 @@
 (defvar-local jwa-modeline--unsaved-buffers-indicator
   '(:eval (when (jwa-unsaved-buffers-p)
 	    (propertize " • " 'face 'error)))
-  "Construct to display unsaved buffers indicator")
+  "Construct to display unsaved buffers indicator.")
 
 (defvar-local jwa-modeline--buffer-state
   '(:eval (when (mode-line-window-selected-p)
 	    (cond (view-mode "")
 		  (buffer-read-only (propertize " RO " 'face 'next-error))
 		  (t (propertize " RW " 'face 'next-error)))))
-  "Construct to display buffer state (readonly/readwrite) in the mode-line")
+  "Construct to display buffer state (readonly/readwrite) in the mode-line.")
 
 (defvar-local jwa-modeline--buffer-name
   '(:eval (propertize (format " %s " (buffer-name))
 		      'face (if (buffer-modified-p) 'org-warning 'mode-line-buffer-id)))
-  "Construct to display buffer name in the mode-line")
+  "Construct to display buffer name in the mode-line.")
 
 (defvar-local jwa-modeline--vc
   '(:eval (when (and (mode-line-window-selected-p) vc-mode)
 	    (propertize
 	     (replace-regexp-in-string "^ Git:\\(.*\\)" " [\\1] " vc-mode)
 	     'face '(:inherit minibuffer-prompt))))
-  "Construct to display version control infromation in the mode-line")
+  "Construct to display version control infromation in the mode-line.")
 
 (defvar-local jwa-modeline--tab-name
   '(:eval (when (and (mode-line-window-selected-p)
@@ -57,20 +64,20 @@
 					  (1+ (tab-bar--current-tab-index))
 					  (length (tab-bar-tabs)))
 				  'face 'completions-highlight))))
-  "Construct to show the current tab number on the mode-line")
+  "Construct to show the current tab number on the mode-line.")
 
 (defvar-local jwa-modeline--modes
   '(:eval (when (mode-line-window-selected-p) mode-line-modes))
-  "Construct to show major and minor modes on the mode-line")
+  "Construct to show major and minor modes on the mode-line.")
 
 (defvar-local jwa-modeline--position
   '(:eval (when (mode-line-window-selected-p) mode-line-position))
-  "Construct to show cursor position on the mode-line")
+  "Construct to show cursor position on the mode-line.")
 
 (defvar-local jwa-modeline--narrow
   '(:eval (when (buffer-narrowed-p)
 	    (list (propertize " NARROW " 'face 'diff-added) " ")))
-  "Construct to express narrow state on the mode-line")
+  "Construct to express narrow state on the mode-line.")
 
 (defvar-local jwa-modeline--battery
   '(:eval (when (mode-line-window-selected-p)
@@ -109,3 +116,4 @@
 		mode-line-end-spaces))
 
 (provide 'jwa-modeline)
+;;; jwa-modeline.el ends here
