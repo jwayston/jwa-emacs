@@ -1,13 +1,16 @@
 ;;; jwa.el --- Personal utility functions -*- lexical-binding: t; -*-
 
+;;; Commentary:
+;;; Code:
 (defun jwa-hi-hashtags()
+  "Add font-lock keywords to highlight hashtags."
   (font-lock-add-keywords nil '(("\\(?:^\\|\\s-\\)\\(#\\)\\([[:alnum:]_]+\\)"
 				 (1 '(face nil invisible t))
 				 (2 'so-long-mode-line-inactive t)))))
 
 ;;;; Buffers
 (defun jwa-unsaved-buffers-p ()
-  "List unsaved buffers"
+  "List unsaved buffers."
   (seq-filter (lambda (buf)
 		(and (buffer-modified-p buf)
                      (buffer-file-name buf)))
@@ -27,11 +30,11 @@
       (get-buffer-window-list buf)))
 
 (defun jwa-buffer-current-p (buf)
-  "Is the buffer current BUF?"
+  "Is the current buffer BUF?"
   (eq buf (current-buffer)))
 
 (defun jwa-kill-futile-buffers ()
-  "Kill all buffers except for unsaved, active or otherwise necessary ones"
+  "Kill all buffers except for unsaved, active or otherwise necessary ones."
   (interactive)
   (let* ((all (buffer-list))
 	 (list-1 (seq-remove #'jwa-buffer-essential-p all))
@@ -46,20 +49,21 @@
 
 ;;;; Text editing
 (defun jwa--text-add-marker-line-below (char &optional line-chars)
+  "Add text marker line below of length LINE-CHARS using CHAR."
   (interactive "cChar: \nP")
   (let ((num (or line-chars fill-column))
 	(char (if (or (null char) (= char ?\C-m)) ?- char)))
     (save-excursion (end-of-line) (newline) (insert (make-string num char)))))
 
 (defun jwa-text-line-to-heading (char)
-  "Generate contiguous heading markers below the text line"
+  "Generate contiguous heading markers below the text line using CHAR."
   (interactive "cChar: ")
   (let* ((line-chars (- (line-end-position) (line-beginning-position))))
     (jwa--text-add-marker-line-below char line-chars)))
 
 (defun jwa-text-line-to-columns-header (char)
   "Format current line as a N-column header with header markerline CHAR below.
-Columns must be separated with two spaces. Column alignment is adjusted as per
+Columns must be separated with two spaces.  Column alignment is adjusted as per
 `fill-column'."
   (interactive "cChar: ")
   (let* ((separator "  ")
@@ -79,7 +83,7 @@ Columns must be separated with two spaces. Column alignment is adjusted as per
       (jwa-text-line-to-heading char))))
 
 (defun jwa-text-region-to-box ()
-  "Draw box around a selection using external `boxes' command"
+  "Draw box around a selection using external `boxes' command."
   (interactive)
   (let* ((styles-raw (shell-command-to-string "/opt/homebrew/opt/grep/bin/ggrep -oP 'BOX \\K(.*)' /opt/homebrew/share/boxes-config | sed 's/.*/\"&\"/'"))
 	 (styles-lisp (car (read-from-string (concat "(" styles-raw ")"))))
@@ -89,18 +93,18 @@ Columns must be separated with two spaces. Column alignment is adjusted as per
     (shell-command-on-region (region-beginning) (region-end) cmd t t)))
 
 (defun jwa-newline-above ()
-  "Insert newline above, indent and jump there"
+  "Insert newline above, indent and jump there."
   (interactive)
   (move-beginning-of-line 1)
   (newline-and-indent) (forward-line -1) (indent-according-to-mode))
 
 (defun jwa-newline-below ()
-  "Insert newline below, indent and jump there"
+  "Insert newline below, indent and jump there."
   (interactive)
   (move-end-of-line 1) (newline-and-indent))
 
 (defun jwa-mark-line ()
-  "Mark the current line and leave point at the end of the line"
+  "Mark the current line and leave point at the end of the line."
   (interactive)
   (move-beginning-of-line 1)
   (when (not (use-region-p)) (set-mark (point)))
@@ -113,26 +117,28 @@ Columns must be separated with two spaces. Column alignment is adjusted as per
 
 ;;;; Programming
 (defun jwa-indent-fun ()
-  "Indent a defun under the cursor"
+  "Indent a defun under the cursor."
   (interactive)
   (save-excursion
     (mark-defun)
     (indent-region (region-beginning) (region-end))))
 
 (defun jwa-matching-paren-jump ()
-  "Jump to matching paren"
+  "Jump to matching paren."
   (interactive)
   (cond ((looking-at "[([{\"']") (forward-sexp 1))
 	((looking-at "[)]}\"']") (backward-sexp 1))
 	 (t (message "Cursor not next to a paren"))))
 
 (defun jwa-move-line-up-and-indent ()
+  "Move current line up and indent according to mode."
   (interactive)
   (transpose-lines 1)
   (forward-line -2)
   (indent-according-to-mode))
 
 (defun jwa-move-line-down-and-indent ()
+  "Move current line down and indent according to mode."
   (interactive)
   (forward-line 1)
   (transpose-lines 1)
@@ -141,13 +147,13 @@ Columns must be separated with two spaces. Column alignment is adjusted as per
 
 ;;;; Miscellaneous
 (defun jwa--base45 (n)
-  "Convert a number to a base45 string representation"
+  "Convert a number N to a base45 string representation."
   (let ((chars "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZÅÄÖÜ_-$!%^"))
     (if (< n 45) (string (elt chars n))
       (concat (jwa--base45 (/ n 45)) (string (elt chars (% n 45)))))))
 
 (defun jwa--zettel-get-uid (initial-identifier date)
-  "Generate a Zettelkasten UID"
+  "Generate a Zettelkasten UID.  INITIAL-IDENTIFIER and DATE are optional."
   (let* ((now (decode-time))
 	 (mins (+ (* (nth 2 now) 60) (nth 1 now)))
 	 (secs (+ (nth 0 now) (* mins 60)))
@@ -156,13 +162,14 @@ Columns must be separated with two spaces. Column alignment is adjusted as per
 	    (replace-regexp-in-string " " "0" xx))))
 
 (defun jwa-zettel-insert-uid ()
-  "Insert a new Zettelkasten UID"
+  "Insert a new Zettelkasten UID."
   (interactive) (insert (jwa--zettel-get-uid)))
 
 ;;;; Org
 (defun jwa-consult-ripgrep-roam-path ()
-  "Open consult-ripgrep on Org Roam path. Search is case-insensitive and results
-are sorted by the filename (descending). Output is not grouped."
+  "Open `consult-ripgrep' on Org Roam path.
+Search is case-insensitive and results are sorted by the filename (descending).
+Output is not grouped."
   (interactive)
   (let* ((my-args " --sortr path --ignore-case")
 	 (vertico-group-format nil)
@@ -178,3 +185,4 @@ are sorted by the filename (descending). Output is not grouped."
      (cons (display-buffer-below-selected buffer alist) nil))))
 
 (provide 'jwa)
+;;; jwa.el ends here
