@@ -1,7 +1,7 @@
 ;;; jwa.el --- Personal utility functions -*- lexical-binding: t; -*-
 
 (defun jwa-hi-hashtags()
-    (font-lock-add-keywords nil '(("\\(?:^\\|\\s-\\)\\(#\\)\\([[:alnum:]_]+\\)"
+  (font-lock-add-keywords nil '(("\\(?:^\\|\\s-\\)\\(#\\)\\([[:alnum:]_]+\\)"
 				 (1 '(face nil invisible t))
 				 (2 'so-long-mode-line-inactive t)))))
 
@@ -168,5 +168,13 @@ are sorted by the filename (descending). Output is not grouped."
 	 (vertico-group-format nil)
 	 (consult-ripgrep-args (concat consult-ripgrep-args my-args)))
     (consult-ripgrep org-roam-directory)))
+
+;;;; Window management
+(defun jwa-next-command-open-below ()
+  "Prefix function to open a window created by next command below."
+  (interactive)
+  (display-buffer-override-next-command
+   (lambda (buffer alist)
+     (cons (display-buffer-below-selected buffer alist) nil))))
 
 (provide 'jwa)
