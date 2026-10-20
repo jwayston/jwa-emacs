@@ -2,6 +2,7 @@
 
 ;;; Commentary:
 ;;; Code:
+;;;; Visual appearance
 (defun jwa-hi-hashtags()
   "Add font-lock keywords to highlight hashtags."
   (font-lock-add-keywords nil '(("\\(?:^\\|\\s-\\)\\(#\\)\\([[:alnum:]_]+\\)"
@@ -144,6 +145,12 @@ Columns must be separated with two spaces.  Column alignment is adjusted as per
   (transpose-lines 1)
   (forward-line -1)
   (indent-according-to-mode))
+
+(defun jwa-mark-sexp ()
+  "Mark the current sexp no matter where the cursor is."
+  (interactive)
+  (call-interactively 'backward-up-list)
+  (call-interactively 'mark-sexp))
 
 ;;;; Miscellaneous
 (defun jwa--base45 (n)
