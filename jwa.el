@@ -3,11 +3,27 @@
 ;;; Commentary:
 ;;; Code:
 ;;;; Visual appearance
-(defun jwa-hi-hashtags()
+(defun jwa-hi-hashtags ()
   "Add font-lock keywords to highlight hashtags."
   (font-lock-add-keywords nil '(("\\(?:^\\|\\s-\\)\\(#\\)\\([[:alnum:]_]+\\)"
 				 (1 '(face nil invisible t))
 				 (2 'so-long-mode-line-inactive t)))))
+
+(defun jwa-hi-todo ()
+  "Add font-lock keywords to highlight todo marks."
+  (font-lock-add-keywords nil '(("\\<\\(TODO\\|FIXME\\|BUG\\):"
+                                 1 'read-multiple-choice-face t))))
+
+(defun jwa-toggle-fringe-icons ()
+  "Toggle fringe icons' visibility."
+  (interactive)
+  (if (local-variable-p 'jwa-fringe-cookie)
+      (progn
+        (face-remap-remove-relative jwa-fringe-cookie)
+        (kill-local-variable 'jwa-fringe-cookie))
+    (setq-local jwa-fringe-cookie
+                (face-remap-add-relative 'fringe :foreground (face-background 'fringe))))
+  (redraw-frame (selected-frame)))
 
 ;;;; Buffers
 (defun jwa-unsaved-buffers-p ()
