@@ -3,16 +3,24 @@
 ;;; Commentary:
 ;;; Code:
 ;;;; Visual appearance
+(defun jwa--font-lock-add-keywords-local (keywords)
+  "Add buffer local font-lock KEYWORDS safely without duplicating them."
+  (font-lock-remove-keywords nil keywords)
+  (font-lock-add-keywords nil keywords))
+
 (defun jwa-hi-hashtags ()
   "Add font-lock keywords to highlight hashtags."
-  (font-lock-add-keywords nil '(("\\(?:^\\|\\s-\\)\\(#\\)\\([[:alnum:]_]+\\)"
-				 (1 '(face nil invisible t))
-				 (2 'so-long-mode-line-inactive t)))))
+  (jwa--font-lock-add-keywords-local
+   '(("\\(?:^\\|\\s-\\)\\(#\\)\\([[:alnum:]_]+\\)"
+		    (1 '(face nil invisible t))
+		    (2 'so-long-mode-line-inactive t)))))
 
 (defun jwa-hi-todo ()
   "Add font-lock keywords to highlight todo marks."
-  (font-lock-add-keywords nil '(("\\<\\(TODO\\|FIXME\\|BUG\\):"
-                                 1 'read-multiple-choice-face t))))
+  (jwa--font-lock-add-keywords-local
+   '(("^\\s-*;.*\\(\\<TODO:.*\\)" 1 'diff-refine-changed t)
+     ("^\\s-*;.*\\(\\<BUG:.*\\)" 1 'dired-flagged t)
+     ("^\\s-*;.*\\(\\<FIXME:.*\\)" 1 'dired-marked t))))
 
 (defun jwa-toggle-fringe-icons ()
   "Toggle fringe icons' visibility."
@@ -65,6 +73,12 @@
       (message "Nothing to kill"))))
 
 ;;;; Text editing
+(defun jwa-text-insert-hr-center ()
+  "Insert centered horizontal rule line."
+  (interactive)
+  (insert (make-string (or current-prefix-arg 5) ?-))
+  (center-line))
+
 (defun jwa--text-add-marker-line-below (char &optional line-chars)
   "Add text marker line below of length LINE-CHARS using CHAR."
   (interactive "cChar: \nP")
