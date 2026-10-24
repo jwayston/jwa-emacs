@@ -7,11 +7,37 @@
 (require 'battery)
 
 ;;;; General settings
-(setq-default mode-line-position '((line-number-mode ("%l"))
-				   (column-number-mode (":%c"))))
+(setq-default mode-line-position
+      '((:propertize " %l:" face shadow)
+        (:propertize "%c " face shadow)))
 
 (setq mode-line-collapse-minor-modes '(not)
       mode-line-modes-delimiters '("" . ""))
+
+(defun jwa-modeline-set-theme (&rest _)
+  "Setup jwa-modeline theming.
+Can be used with hook `enable-theme-functions' to dynamically follow
+theme changes."
+  (let* ((bg (face-attribute 'default :background nil t))
+         (line (face-attribute 'fill-column-indicator :foreground nil t)))
+    (custom-set-faces `(mode-line-active
+                        ((t ( :background ,bg
+                              :box (:line-width 8 :color ,bg)
+                              :overline ,line)))
+                        t))))
+
+(defun jwa-modeline-set-theme (&rest _)
+  "Setup jwa-modeline theming.
+Can be used with hook `enable-theme-functions' to dynamically follow
+theme changes."
+  (let* ((bg (face-attribute 'default :background nil t))
+         (line (face-attribute 'fill-column-indicator :foreground nil t)))
+    (set-face-attribute 'mode-line-active nil
+                        :background bg
+                        :box `(:line-width 8 :color ,bg)
+                        :overline line)))
+
+(add-hook 'enable-theme-functions #'jwa-modeline-set-theme 90)
 
 ;;;; Battery status; show only when not on AC
 (display-battery-mode t)
@@ -53,10 +79,10 @@ to \" AC \" if AC power is detected, otherwise use
   '(:eval (when (and (mode-line-window-selected-p) vc-mode)
 	    (propertize
 	     (replace-regexp-in-string "^ Git:\\(.*\\)" " [\\1] " vc-mode)
-	     'face '(:inherit minibuffer-prompt))))
+	     'face '(:inherit shadow))))
   "Construct to display version control infromation in the mode-line.")
 
-(defvar-local jwa-modeline--tab-name
+(defvar-local jwa-modeline--tabs
   '(:eval (when (and (mode-line-window-selected-p)
 		     tab-bar-mode
 		     (> (length (funcall tab-bar-tabs-function)) 1))
@@ -87,7 +113,7 @@ to \" AC \" if AC power is detected, otherwise use
 (dolist (construct '(jwa-modeline--buffer-state
 		     jwa-modeline--buffer-name
 		     jwa-modeline--vc
-		     jwa-modeline--tab-name
+		     jwa-modeline--tabs
 		     jwa-modeline--modes
 		     jwa-modeline--position
 		     jwa-modeline--narrow
@@ -101,7 +127,7 @@ to \" AC \" if AC power is detected, otherwise use
 		mode-line-front-space
 		jwa-modeline--narrow
 		;; jwa-modeline--buffer-state
-		jwa-modeline--tab-name
+		jwa-modeline--tabs
 		" "
 		jwa-modeline--buffer-name
 		jwa-modeline--unsaved-buffers-indicator
