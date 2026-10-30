@@ -35,8 +35,8 @@
 
 ;;;; Buffers
 (defun jwa-unsaved-buffers-p ()
-  "List unsaved buffers."
-  (seq-filter (lambda (buf)
+  "Tell if there are unsaved buffers."
+  (seq-some (lambda (buf)
 		(and (buffer-modified-p buf)
                      (buffer-file-name buf)))
               (buffer-list)))

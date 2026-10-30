@@ -16,21 +16,10 @@
 
 (defun jwa-modeline-set-theme (&rest _)
   "Setup jwa-modeline theming.
+
 Can be used with hook `enable-theme-functions' to dynamically follow
 theme changes."
   (interactive)
-  (let* ((bg (face-attribute 'default :background nil t))
-         (line (face-attribute 'fill-column-indicator :foreground nil t)))
-    (custom-set-faces `(mode-line-active
-                        ((t ( :background ,bg
-                              :box (:line-width 8 :color ,bg)
-                              :overline ,line)))
-                        t))))
-
-(defun jwa-modeline-set-theme (&rest _)
-  "Setup jwa-modeline theming.
-Can be used with hook `enable-theme-functions' to dynamically follow
-theme changes."
   (let* ((bg (face-attribute 'default :background nil t))
          (line (face-attribute 'fill-column-indicator :foreground nil t)))
     (set-face-attribute 'mode-line-active nil
@@ -41,12 +30,14 @@ theme changes."
 (add-hook 'enable-theme-functions #'jwa-modeline-set-theme 90)
 
 ;;;; Battery status; show only when not on AC
+
 (display-battery-mode t)
 (defvar jwa-modeline--battery-format " %p %%%% ")
 (setq battery-mode-line-format jwa-modeline--battery-format)
 
 (defun jwa-modeline--battery-hide-on-ac (orig-fun &rest args)
   "Advice around `battery-update' to hide battery info when on AC power.
+
 Call ORIG-FUN with ARGS, but temporarily bind `battery-mode-line-format'
 to \" AC \" if AC power is detected, otherwise use
 `jwa-modeline--battery-format'."
@@ -58,15 +49,40 @@ to \" AC \" if AC power is detected, otherwise use
 (advice-add 'battery-update :around #'jwa-modeline--battery-hide-on-ac)
 
 ;;;; Mode-line segments
+;;;;; Setup caches
+
+(defvar jwa-modeline--unsaved-buffers-cache nil)
+(defvar jwa-modeline--tabs-cache nil)
+
+(defun jwa-modeline--update-unsaved-buffers-cache ()
+  (setq jwa-modeline--unsaved-buffers-cache (jwa-unsaved-buffers-p))
+  (force-mode-line-update t))
+
+(defun jwa-modeline--update-tabs-cache (&rest _)
+  (setq jwa-modeline--tabs-cache
+        (when tab-bar-mode
+          (let ((tabs (funcall tab-bar-tabs-function)))
+            (when (> (length tabs) 1) 
+              (format " %s/%s "
+		      (1+ (tab-bar--current-tab-index))
+		      (length (tab-bar-tabs)))))))
+  (force-mode-line-update t))
+
+(run-with-timer 1 1 #'jwa-modeline--update-unsaved-buffers-cache)
+(run-with-timer 1 1 #'jwa-modeline--update-tabs-cache)
+
+(add-hook 'tab-bar-tab-post-select-functions #'jwa-modeline--update-tabs-cache)
+
+;;;;; Setup segments
+
 (defvar-local jwa-modeline--unsaved-buffers-indicator
-  '(:eval (when (jwa-unsaved-buffers-p)
+  '(:eval (when jwa-modeline--unsaved-buffers-cache
 	    (propertize " • " 'face 'error)))
   "Construct to display unsaved buffers indicator.")
 
 (defvar-local jwa-modeline--buffer-state
   '(:eval (when (mode-line-window-selected-p)
-	    (cond (view-mode "")
-		  (buffer-read-only (propertize " RO " 'face 'next-error))
+	    (cond (buffer-read-only (propertize " RO " 'face 'next-error))
 		  (t (propertize " RW " 'face 'next-error)))))
   "Construct to display buffer state (readonly/readwrite) in the mode-line.")
 
@@ -77,19 +93,14 @@ to \" AC \" if AC power is detected, otherwise use
 
 (defvar-local jwa-modeline--vc
   '(:eval (when (and (mode-line-window-selected-p) vc-mode)
-	    (propertize
-	     (replace-regexp-in-string "^ Git:\\(.*\\)" " [\\1] " vc-mode)
-	     'face '(:inherit shadow))))
+	    (propertize vc-mode 'face '(:inherit shadow))))
   "Construct to display version control infromation in the mode-line.")
 
 (defvar-local jwa-modeline--tabs
   '(:eval (when (and (mode-line-window-selected-p)
-		     tab-bar-mode
-		     (> (length (funcall tab-bar-tabs-function)) 1))
-	    (list " " (propertize (format " %s/%s "
-					  (1+ (tab-bar--current-tab-index))
-					  (length (tab-bar-tabs)))
-				  'face 'completions-highlight))))
+                     jwa-modeline--tabs-cache)
+            (list " " (propertize jwa-modeline--tabs-cache
+                                  'face 'completions-highlight))))
   "Construct to show the current tab number on the mode-line.")
 
 (defvar-local jwa-modeline--modes
