@@ -8,8 +8,8 @@
 
 ;;;; General settings
 (setq-default mode-line-position
-      '((:propertize " %l:" face shadow)
-        (:propertize "%c " face shadow)))
+              '((:propertize " %l:" face shadow)
+                (:propertize "%c " face shadow)))
 
 (setq mode-line-collapse-minor-modes '(not)
       mode-line-modes-delimiters '("" . ""))
@@ -18,6 +18,7 @@
   "Setup jwa-modeline theming.
 Can be used with hook `enable-theme-functions' to dynamically follow
 theme changes."
+  (interactive)
   (let* ((bg (face-attribute 'default :background nil t))
          (line (face-attribute 'fill-column-indicator :foreground nil t)))
     (custom-set-faces `(mode-line-active
@@ -41,7 +42,6 @@ theme changes."
 
 ;;;; Battery status; show only when not on AC
 (display-battery-mode t)
-
 (defvar jwa-modeline--battery-format " %p %%%% ")
 (setq battery-mode-line-format jwa-modeline--battery-format)
 
