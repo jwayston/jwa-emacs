@@ -189,7 +189,7 @@ Columns must be separated with two spaces.  Column alignment is adjusted as per
     (if (< n 45) (string (elt chars n))
       (concat (jwa--base45 (/ n 45)) (string (elt chars (% n 45)))))))
 
-(defun jwa--zettel-get-uid (initial-identifier date)
+(defun jwa--zettel-get-uid (&optional _initial-identifier _date)
   "Generate a Zettelkasten UID.  INITIAL-IDENTIFIER and DATE are optional."
   (let* ((now (decode-time))
 	 (mins (+ (* (nth 2 now) 60) (nth 1 now)))
