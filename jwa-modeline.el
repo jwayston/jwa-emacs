@@ -7,6 +7,7 @@
 (require 'battery)
 
 ;;;; General settings
+
 (setq-default mode-line-position
               '((:propertize " %l:%c " face shadow)))
 
@@ -52,6 +53,7 @@ to \" AC \" if AC power is detected, otherwise use
 
 (defvar jwa-modeline--unsaved-buffers-cache nil)
 (defvar jwa-modeline--tabs-cache nil)
+(defvar-local jwa-modeline--minor-modes-cache nil)
 
 (defun jwa-modeline--update-unsaved-buffers-cache ()
   "Update unsaved buffers cache when requested."
@@ -69,10 +71,17 @@ to \" AC \" if AC power is detected, otherwise use
 		      (length (tab-bar-tabs)))))))
   (force-mode-line-update t))
 
+(defun jwa-modeline--update-minor-modes-cache ()
+  "Update minor modes cache when requested."
+  (setq-local jwa-modeline--minor-modes-cache
+              (propertize (format-mode-line mode-line-minor-modes) 'face 'shadow)))
+
 (run-with-timer 1 1 #'jwa-modeline--update-unsaved-buffers-cache)
 (run-with-timer 1 1 #'jwa-modeline--update-tabs-cache)
 
 (add-hook 'tab-bar-tab-post-select-functions #'jwa-modeline--update-tabs-cache)
+(add-hook 'after-change-major-mode-hook #'jwa-modeline--update-minor-modes-cache)
+(add-hook 'menu-bar-update-hook #'jwa-modeline--update-minor-modes-cache)
 
 ;;;;; Setup segments
 
@@ -108,7 +117,13 @@ to \" AC \" if AC power is detected, otherwise use
   '(:eval (when (mode-line-window-selected-p)
             (list (propertize "λ" 'face 'shadow)
                   " "
-                  mode-line-modes)))
+                  (propertize (format-mode-line mode-name)
+			'mouse-face 'mode-line-highlight
+			'local-map mode-line-major-mode-keymap
+                        'face 'shadow)
+                  (if (string-empty-p jwa-modeline--minor-modes-cache)
+                      (jwa-modeline--update-minor-modes-cache)
+                    jwa-modeline--minor-modes-cache))))
   "Construct to show major and minor modes on the mode-line.")
 
 (defvar-local jwa-modeline--position
