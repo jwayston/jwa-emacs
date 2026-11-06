@@ -54,10 +54,12 @@ to \" AC \" if AC power is detected, otherwise use
 (defvar jwa-modeline--tabs-cache nil)
 
 (defun jwa-modeline--update-unsaved-buffers-cache ()
+  "Update unsaved buffers cache when requested."
   (setq jwa-modeline--unsaved-buffers-cache (jwa-unsaved-buffers-p))
   (force-mode-line-update t))
 
 (defun jwa-modeline--update-tabs-cache (&rest _)
+  "Update tabs cache when requested."
   (setq jwa-modeline--tabs-cache
         (when tab-bar-mode
           (let ((tabs (funcall tab-bar-tabs-function)))
