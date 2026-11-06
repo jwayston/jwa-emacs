@@ -8,8 +8,7 @@
 
 ;;;; General settings
 (setq-default mode-line-position
-              '((:propertize " %l:" face shadow)
-                (:propertize "%c " face shadow)))
+              '((:propertize " %l:%c " face shadow)))
 
 (setq mode-line-collapse-minor-modes '(not)
       mode-line-modes-delimiters '("" . ""))
@@ -62,7 +61,7 @@ to \" AC \" if AC power is detected, otherwise use
   (setq jwa-modeline--tabs-cache
         (when tab-bar-mode
           (let ((tabs (funcall tab-bar-tabs-function)))
-            (when (> (length tabs) 1) 
+            (when (> (length tabs) 1)
               (format " %s/%s "
 		      (1+ (tab-bar--current-tab-index))
 		      (length (tab-bar-tabs)))))))
@@ -104,7 +103,10 @@ to \" AC \" if AC power is detected, otherwise use
   "Construct to show the current tab number on the mode-line.")
 
 (defvar-local jwa-modeline--modes
-  '(:eval (when (mode-line-window-selected-p) mode-line-modes))
+  '(:eval (when (mode-line-window-selected-p)
+            (list (propertize "λ" 'face 'shadow)
+                  " "
+                  mode-line-modes)))
   "Construct to show major and minor modes on the mode-line.")
 
 (defvar-local jwa-modeline--position
@@ -140,10 +142,10 @@ to \" AC \" if AC power is detected, otherwise use
 		;; jwa-modeline--buffer-state
 		jwa-modeline--tabs
 		" "
-		jwa-modeline--buffer-name
 		jwa-modeline--unsaved-buffers-indicator
-		" "
+		jwa-modeline--buffer-name
 		jwa-modeline--vc
+		" "
 		mode-line-format-right-align
 		jwa-modeline--position
 		"  "
