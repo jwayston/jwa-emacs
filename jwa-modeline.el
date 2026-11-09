@@ -54,6 +54,7 @@ to \" AC \" if AC power is detected, otherwise use
 (defvar jwa-modeline--unsaved-buffers-cache nil)
 (defvar jwa-modeline--tabs-cache nil)
 (defvar-local jwa-modeline--minor-modes-cache nil)
+(defvar-local jwa-modeline--todos-cache nil)
 
 (defun jwa-modeline--update-unsaved-buffers-cache ()
   "Update unsaved buffers cache when requested."
@@ -76,12 +77,24 @@ to \" AC \" if AC power is detected, otherwise use
   (setq-local jwa-modeline--minor-modes-cache
               (propertize (format-mode-line mode-line-minor-modes) 'face 'shadow)))
 
+(defun jwa-modeline--update-todos-cache ()
+  "Update todos cache when requested."
+  (setq-local jwa-modeline--todos-cache
+              (when (derived-mode-p 'prog-mode)
+                (let ((case-fold-search nil))
+                  (if (save-excursion
+                        (goto-char (point-min))
+                        (re-search-forward "^[\s\t]*\\(;+\\|#\s\\).*\\(TODO:\\|FIX:\\|BUG:\\)" nil t))
+                      t nil)))))
+
 (run-with-timer 1 1 #'jwa-modeline--update-unsaved-buffers-cache)
 (run-with-timer 1 1 #'jwa-modeline--update-tabs-cache)
 
 (add-hook 'tab-bar-tab-post-select-functions #'jwa-modeline--update-tabs-cache)
 (add-hook 'after-change-major-mode-hook #'jwa-modeline--update-minor-modes-cache)
 (add-hook 'menu-bar-update-hook #'jwa-modeline--update-minor-modes-cache)
+(add-hook 'after-save-hook #'jwa-modeline--update-todos-cache)
+(add-hook 'after-find-file #'jwa-modeline--update-todos-cache)
 
 ;;;;; Setup segments
 
@@ -138,7 +151,14 @@ to \" AC \" if AC power is detected, otherwise use
 (defvar-local jwa-modeline--battery
   '(:eval (when (mode-line-window-selected-p)
 	    (list " " (propertize battery-mode-line-string
-				  'face 'completions-highlight)))))
+				  'face 'completions-highlight))))
+  "Construct to display battery status on the mode-line.")
+
+(defvar-local jwa-modeline--todos
+  '(:eval (when (and (mode-line-window-selected-p)
+                     jwa-modeline--todos-cache)
+            (list " " (propertize " T " 'face 'dired-marked))))
+  "Construct to display indicator when there are todos in file.")
 
 (dolist (construct '(jwa-modeline--buffer-state
 		     jwa-modeline--buffer-name
@@ -148,6 +168,7 @@ to \" AC \" if AC power is detected, otherwise use
 		     jwa-modeline--position
 		     jwa-modeline--narrow
 		     jwa-modeline--battery
+                     jwa-modeline--todos
 		     jwa-modeline--unsaved-buffers-indicator))
   (put construct 'risky-local-variable t))
 
@@ -158,6 +179,7 @@ to \" AC \" if AC power is detected, otherwise use
 		jwa-modeline--narrow
 		;; jwa-modeline--buffer-state
 		jwa-modeline--tabs
+                jwa-modeline--todos
 		" "
 		jwa-modeline--unsaved-buffers-indicator
 		jwa-modeline--buffer-name
