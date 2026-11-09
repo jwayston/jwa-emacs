@@ -114,13 +114,13 @@ to \" AC \" if AC power is detected, otherwise use
   "Construct to show the current tab number on the mode-line.")
 
 (defvar-local jwa-modeline--modes
-  '(:eval (when (mode-line-window-selected-p)
-            (list (propertize "λ" 'face 'shadow)
-                  " "
-                  (propertize (format-mode-line mode-name)
-			'mouse-face 'mode-line-highlight
-			'local-map mode-line-major-mode-keymap
-                        'face 'shadow)
+  '(:eval (list (propertize "λ" 'face 'shadow)
+                " "
+                (propertize (format-mode-line mode-name)
+			    'mouse-face 'mode-line-highlight
+			    'local-map mode-line-major-mode-keymap
+                            'face 'shadow)
+                (when (mode-line-window-selected-p)
                   (if (string-empty-p jwa-modeline--minor-modes-cache)
                       (jwa-modeline--update-minor-modes-cache)
                     jwa-modeline--minor-modes-cache))))
