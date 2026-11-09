@@ -87,19 +87,21 @@ to \" AC \" if AC power is detected, otherwise use
                         (re-search-forward "^[\s\t]*\\(;+\\|#\s\\).*\\(TODO:\\|FIX:\\|BUG:\\)" nil t))
                       t nil)))))
 
-(run-with-timer 1 1 #'jwa-modeline--update-unsaved-buffers-cache)
+(run-with-timer 1 3 #'jwa-modeline--update-unsaved-buffers-cache)
 (run-with-timer 1 1 #'jwa-modeline--update-tabs-cache)
 
 (add-hook 'tab-bar-tab-post-select-functions #'jwa-modeline--update-tabs-cache)
 (add-hook 'after-change-major-mode-hook #'jwa-modeline--update-minor-modes-cache)
 (add-hook 'menu-bar-update-hook #'jwa-modeline--update-minor-modes-cache)
+(add-hook 'after-save-hook #'jwa-modeline--update-unsaved-buffers-cache)
 (add-hook 'after-save-hook #'jwa-modeline--update-todos-cache)
 (add-hook 'after-find-file #'jwa-modeline--update-todos-cache)
 
 ;;;;; Setup segments
 
 (defvar-local jwa-modeline--unsaved-buffers-indicator
-  '(:eval (when jwa-modeline--unsaved-buffers-cache
+  '(:eval (when (and (mode-line-window-selected-p)
+                     jwa-modeline--unsaved-buffers-cache)
 	    (propertize " • " 'face 'error)))
   "Construct to display unsaved buffers indicator.")
 
@@ -144,7 +146,8 @@ to \" AC \" if AC power is detected, otherwise use
   "Construct to show cursor position on the mode-line.")
 
 (defvar-local jwa-modeline--narrow
-  '(:eval (when (buffer-narrowed-p)
+  '(:eval (when (and (mode-line-window-selected-p)
+                     (buffer-narrowed-p))
 	    (list (propertize " NARROW " 'face 'diff-added) " ")))
   "Construct to express narrow state on the mode-line.")
 
