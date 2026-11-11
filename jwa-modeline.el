@@ -4,7 +4,8 @@
 ;;; Code:
 
 (require 'jwa)
-(require 'battery)
+(eval-when-compile
+  (require 'battery))
 
 ;;;; General settings
 
@@ -31,10 +32,11 @@ theme changes."
 
 ;;;; Battery status; show only when not on AC
 
-(display-battery-mode t)
+(add-hook 'emacs-startup-hook #'display-battery-mode)
 (defvar jwa-modeline--battery-format " %p %%%% ")
 (setq battery-mode-line-format jwa-modeline--battery-format)
 
+(declare-function "battery-format" "battery.el")
 (defun jwa-modeline--battery-hide-on-ac (orig-fun &rest args)
   "Advice around `battery-update' to hide battery info when on AC power.
 
@@ -87,9 +89,12 @@ to \" AC \" if AC power is detected, otherwise use
                         (re-search-forward "^[\s\t]*\\(;+\\|#\s\\).*\\(TODO:\\|FIX:\\|BUG:\\)" nil t))
                       t nil)))))
 
-(run-with-timer 1 3 #'jwa-modeline--update-unsaved-buffers-cache)
-(run-with-timer 1 1 #'jwa-modeline--update-tabs-cache)
+(defun jwa-modeline--run-cache-timers ()
+  "Run timers that update caches."
+  (run-with-timer 1 3 #'jwa-modeline--update-unsaved-buffers-cache))
 
+(add-hook 'emacs-startup-hook #'jwa-modeline--run-cache-timers)
+(add-hook 'tab-bar-tab-post-open-functions #'jwa-modeline--update-tabs-cache)
 (add-hook 'tab-bar-tab-post-select-functions #'jwa-modeline--update-tabs-cache)
 (add-hook 'after-change-major-mode-hook #'jwa-modeline--update-minor-modes-cache)
 (add-hook 'menu-bar-update-hook #'jwa-modeline--update-minor-modes-cache)
@@ -99,36 +104,36 @@ to \" AC \" if AC power is detected, otherwise use
 
 ;;;;; Setup segments
 
-(defvar-local jwa-modeline--unsaved-buffers-indicator
+(defvar jwa-modeline--unsaved-buffers-indicator
   '(:eval (when (and (mode-line-window-selected-p)
                      jwa-modeline--unsaved-buffers-cache)
 	    (propertize " • " 'face 'error)))
   "Construct to display unsaved buffers indicator.")
 
-(defvar-local jwa-modeline--buffer-state
+(defvar jwa-modeline--buffer-state
   '(:eval (when (mode-line-window-selected-p)
 	    (cond (buffer-read-only (propertize " RO " 'face 'next-error))
 		  (t (propertize " RW " 'face 'next-error)))))
   "Construct to display buffer state (readonly/readwrite) in the mode-line.")
 
-(defvar-local jwa-modeline--buffer-name
+(defvar jwa-modeline--buffer-name
   '(:eval (propertize (format " %s " (buffer-name))
-		      'face (if (buffer-modified-p) 'org-warning 'mode-line-buffer-id)))
+		      'face (if (buffer-modified-p) 'elisp-warning-type 'mode-line-buffer-id)))
   "Construct to display buffer name in the mode-line.")
 
-(defvar-local jwa-modeline--vc
+(defvar jwa-modeline--vc
   '(:eval (when (and (mode-line-window-selected-p) vc-mode)
 	    (propertize vc-mode 'face '(:inherit shadow))))
   "Construct to display version control infromation in the mode-line.")
 
-(defvar-local jwa-modeline--tabs
+(defvar jwa-modeline--tabs
   '(:eval (when (and (mode-line-window-selected-p)
                      jwa-modeline--tabs-cache)
             (list " " (propertize jwa-modeline--tabs-cache
                                   'face 'completions-highlight))))
   "Construct to show the current tab number on the mode-line.")
 
-(defvar-local jwa-modeline--modes
+(defvar jwa-modeline--modes
   '(:eval (list (propertize "λ" 'face 'shadow)
                 " "
                 (propertize (format-mode-line mode-name)
@@ -136,28 +141,28 @@ to \" AC \" if AC power is detected, otherwise use
 			    'local-map mode-line-major-mode-keymap
                             'face 'shadow)
                 (when (mode-line-window-selected-p)
-                  (if (string-empty-p jwa-modeline--minor-modes-cache)
+                  (if (not jwa-modeline--minor-modes-cache)
                       (jwa-modeline--update-minor-modes-cache)
                     jwa-modeline--minor-modes-cache))))
   "Construct to show major and minor modes on the mode-line.")
 
-(defvar-local jwa-modeline--position
+(defvar jwa-modeline--position
   '(:eval (when (mode-line-window-selected-p) mode-line-position))
   "Construct to show cursor position on the mode-line.")
 
-(defvar-local jwa-modeline--narrow
+(defvar jwa-modeline--narrow
   '(:eval (when (and (mode-line-window-selected-p)
                      (buffer-narrowed-p))
 	    (list (propertize " NARROW " 'face 'diff-added) " ")))
   "Construct to express narrow state on the mode-line.")
 
-(defvar-local jwa-modeline--battery
+(defvar jwa-modeline--battery
   '(:eval (when (mode-line-window-selected-p)
 	    (list " " (propertize battery-mode-line-string
 				  'face 'completions-highlight))))
   "Construct to display battery status on the mode-line.")
 
-(defvar-local jwa-modeline--todos
+(defvar jwa-modeline--todos
   '(:eval (when (and (mode-line-window-selected-p)
                      jwa-modeline--todos-cache)
             (list " " (propertize " T " 'face 'dired-marked))))
@@ -176,25 +181,27 @@ to \" AC \" if AC power is detected, otherwise use
   (put construct 'risky-local-variable t))
 
 ;;;; Setup mode-line
-(setq-default mode-line-format
-	      '("%e"
-		mode-line-front-space
-		jwa-modeline--narrow
-		;; jwa-modeline--buffer-state
-		jwa-modeline--tabs
-                jwa-modeline--todos
-		" "
-		jwa-modeline--unsaved-buffers-indicator
-		jwa-modeline--buffer-name
-		jwa-modeline--vc
-		" "
-		mode-line-format-right-align
-		jwa-modeline--position
-		"  "
-		jwa-modeline--modes
-		" "
-		jwa-modeline--battery
-		mode-line-end-spaces))
+(add-hook 'window-setup-hook
+          (lambda ()
+            (setq-default mode-line-format
+	                  '("%e"
+		            mode-line-front-space
+		            jwa-modeline--narrow
+		            ;; jwa-modeline--buffer-state
+		            jwa-modeline--tabs
+                            jwa-modeline--todos
+		            " "
+		            jwa-modeline--unsaved-buffers-indicator
+		            jwa-modeline--buffer-name
+		            jwa-modeline--vc
+		            " "
+		            mode-line-format-right-align
+		            jwa-modeline--position
+		            "  "
+		            jwa-modeline--modes
+		            " "
+		            jwa-modeline--battery
+		            mode-line-end-spaces))))
 
 (provide 'jwa-modeline)
 ;;; jwa-modeline.el ends here
