@@ -231,6 +231,7 @@ Columns must be separated with two spaces.  Column alignment is adjusted as per
   (interactive) (insert (jwa--zettel-get-uid)))
 
 ;;;; Org
+(defvar org-roam-directory)
 (defun jwa-consult-ripgrep-roam-path ()
   "Open `consult-ripgrep' on Org Roam path.
 Search is case-insensitive and results are sorted by the filename (descending).
