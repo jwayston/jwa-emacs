@@ -33,13 +33,41 @@
                 (face-remap-add-relative 'fringe :foreground (face-background 'fringe))))
   (redraw-frame (selected-frame)))
 
+;;;;; Adjust frame font size if horizontal window columns
+(defvar jwa--font-size-big nil)
+(defvar jwa--font-size-normal nil)
+
+(defun jwa--side-by-side-windows-p ()
+  "Return t if there are side-by-side windows in the frame."
+  (seq-some (lambda (win) (not (window-full-width-p win)))
+            (window-list nil 'no-mini)))
+
+(defun jwa--adjust-font-size-if-wincolumns ()
+  "Adjust font by window count.
+Bigger font when there are just one window, else smaller."
+  (let* ((new-size (cond ((jwa--side-by-side-windows-p) jwa--font-size-normal)
+                         (t jwa--font-size-big)))
+         (frame-inhibit-implied-resize t))
+    (set-face-attribute 'default (selected-frame)
+                        :font (font-spec :size new-size))))
+
+(defun jwa-toggle-adjust-font-size-if-wincolumns (&optional is-columns-size no-columns-size)
+  "Toggle adjust font size if window columns.
+When only one window column exist use font size NO-COLUMNS-SIZE else
+IS-COLUMNS-SIZE."
+  (if (memq 'jwa--adjust-font-size-if-wincolumns window-configuration-change-hook)
+      (remove-hook 'window-configuration-change-hook #'jwa--adjust-font-size-if-wincolumns))
+  (setq jwa--font-size-normal (or is-columns-size 14))
+  (setq jwa--font-size-big (or no-columns-size 16))
+  (add-hook 'window-configuration-change-hook #'jwa--adjust-font-size-if-wincolumns))
+
 ;;;; Buffers
 (defun jwa-unsaved-buffers-p ()
   "Tell if there are unsaved buffers."
   (seq-some (lambda (buf)
-		(and (buffer-modified-p buf)
-                     (buffer-file-name buf)))
-              (buffer-list)))
+	      (and (buffer-modified-p buf)
+                   (buffer-file-name buf)))
+            (buffer-list)))
 
 (defun jwa-buffer-essential-p (buf)
   "Is BUF essential for the system?"
