@@ -175,6 +175,15 @@ Columns must be separated with two spaces.  Column alignment is adjusted as per
   (delete-indentation 1))
 
 ;;;; Programming
+(defun jwa-eval-print-last-sexp-comment ()
+  "Evaluate preceding sexp and print output commented."
+  (interactive)
+  (end-of-line)
+  (newline)
+  (let ((begin (point)))
+    (insert (format "%S" (eval (elisp--preceding-sexp))))
+    (comment-region begin (point))))
+
 (defun jwa-indent-fun ()
   "Indent a defun under the cursor."
   (interactive)
